@@ -8,76 +8,97 @@
 #include<cmath>
 #include<bitset>
 #include<map>
+#include<climits>
+
  
 using namespace std;
- 
-typedef long long ll;
-typedef pair<int, int> pii;
-typedef pair<ll, ll> pll;
 
-struct Shortcut
+class Highway
 {
-    int destination;
-    int cost;
-};
-
-    
-
-
-class Information{
-    
 private:
-    int numOfShorcut, lenOfHighway;
-    
-    
+    int highwayLen;
+    int numOfShortcut;
+
 public:
-
-    vector<int> distance;
-    vector<Shortcut> Map;
-    
-    void InitSetting(int num, int len);
+    int getHighwayLen();
     int getNumOfShortcut();
-    int getLenOfHighWay();
-
+    void setHighway(int len, int num);
 };
 
-void Information::InitSetting(int num, int len){
-    numOfShorcut = num;
-    lenOfHighway = len;
-    for(int i = 0; i<lenOfHighway; i++){
-        distance.push_back(0);
-    }
+int Highway::getHighwayLen(){ return  highwayLen;}
+int Highway::getNumOfShortcut(){ return numOfShortcut;}
+void Highway::setHighway(int len, int num){
+    highwayLen = len;
+    numOfShortcut = num;
 }
 
-int Information::getNumOfShortcut(){return numOfShorcut;}
-int Information::getLenOfHighWay(){return lenOfHighway;}
+class Shortcut
+{
+private:
+    int destination;
+    int cost;
+public:
+    int getDestination();
+    int getCost();
+    void setShorcut(int des, int cos);
+};
 
-
- 
-
+int Shortcut::getDestination(){ return destination;}
+int Shortcut::getCost(){return cost;}
+void Shortcut::setShorcut(int des, int cos){
+    destination = des;
+    cost = cos;
+}
 
 int main(){
     ios_base::sync_with_stdio(false);
     cin.tie(0); cout.tie(0);
-    
-    Information info;
-    
+
+    Highway highway;
     int numShorcut, lenHighway;
+    int beforeDistance = -1; // i==0 일때 distance를 0으로 만들기 위해 초기값 설정
+
     cin>>numShorcut>>lenHighway;
-    info.InitSetting(numShorcut, lenHighway);
     
-    for(int i = 0; i<info.getNumOfShortcut(); i++){
-        int a,b,c;
-        cin>>a>>b>>c;
-        if(b-a<=c) continue;
-        if(b>info.getLenOfHighWay()) continue;
-        info.Map.push_back({b,c});
+    vector<int> distance(lenHighway+1, INT_MAX);
+    distance[lenHighway] = lenHighway;
+
+    highway.setHighway(lenHighway, numShorcut);
+
+    // 같은 위치의 출발/도착이면서 cost가 다른 경우가 있기 때문에 이중벡터 사용
+    vector<vector<Shortcut>> shortcutData(highway.getHighwayLen()+1, vector<Shortcut>() );
+
+    for(int i = 0; i<highway.getNumOfShortcut(); i++){
+
+        int start, departure, cost;
+        cin >> start >> departure >> cost;
+        
+        // 말이 안되는 경우는 데이터에서 제외
+        if((departure - start) <= cost || departure > highway.getHighwayLen())
+            continue;
+
+        Shortcut temShortcut;
+
+        temShortcut.setShorcut(departure, cost);
+        shortcutData[start].push_back(temShortcut);
     }
-    
-    
-    
-    
-    
-   
-   
+
+    for(int i = 0; i<=highway.getHighwayLen(); i++){
+        // -1 전 위치의 데이터 설정
+        if(i>0){
+            beforeDistance = distance[i-1];
+        }
+        
+        distance[i] = min(distance[i], beforeDistance+1);
+
+        for(auto next : shortcutData[i]){
+            if( distance[next.getDestination()] > distance[i]+next.getCost()){
+                distance[next.getDestination()] = distance[i]+next.getCost();
+            }
+        }
+
+    }
+
+    cout<<distance[highway.getHighwayLen()]<<endl;
 }
+
